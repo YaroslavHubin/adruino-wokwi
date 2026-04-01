@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Графік даних розетки</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let chart;
+
+    async function fetchData() {
+      const res = await fetch("/data");
+      return await res.json();
+    }
+
+    async function updateChart() {
+      const data = await fetchData();
+      const labels = data.map(d => d.time);
+      const temps = data.map(d => d.temp);
+      const hums = data.map(d => d.hum);
+
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = temps;
+      chart.data.datasets[1].data = hums;
+      chart.update();
+    }
+
+    async function toggleSocket() {
+      await fetch("/toggle");
+    }
+
+    window.onload = async () => {
+      const ctx = document.getElementById("myChart").getContext("2d");
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label: 'Температура (°C)', borderColor: 'red', data: [] },
+            { label: 'Вологість (%)', borderColor: 'blue', data: [] }
+          ]
+        }
+      });
+      setInterval(updateChart, 1000);
+    }
+  </script>
+</head>
+<body>
+  <h1>Розумна розетка з таймером</h1>
+  <button onclick="toggleSocket()">Перемкнути</button>
+  <canvas id="myChart" width="600" height="400"></canvas>
+</body>
+</html>
