@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Кліматичні дані</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #chart-container {
+      width: 80%;
+      margin: 0 auto;
+    }
+    #reset-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #reset-btn:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Графік кліматичних параметрів</h1>
+  <div id="chart-container">
+    <canvas id="climateChart"></canvas>
+  </div>
+  <button id="reset-btn">Скинути масштаб</button>
+
+  <script>
+    async function fetchData() {
+      const response = await fetch("http://localhost:5000/data");
+      return await response.json();
+    }
+
+    async function renderChart() {
+      const data = await fetchData();
+
+      const labels = data.map(entry => entry.created_at);
+      const humidity = data.map(entry => entry.humidity);
+      const temperature = data.map(entry => entry.temperature);
+      const co2 = data.map(entry => entry.co2);
+
+      const ctx = document.getElementById('climateChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.reverse(),
+          datasets: [
+            { label: 'Вологість', data: humidity.reverse(), borderColor: 'blue', fill: false },
+            { label: 'Температура', data: temperature.reverse(), borderColor: 'yellow', fill: false },
+            { label: 'Дим (CO₂)', data: co2.reverse(), borderColor: 'green', fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Кліматичні параметри з датчиків' },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'xy',
+                modifierKey: 'ctrl' // можна пересувати утримуючи Ctrl
+              },
+              zoom: {
+                wheel: { enabled: true },   // zoom колесом миші
+                pinch: { enabled: true },   // zoom жестами
+                drag: { enabled: true },    // zoom виділенням області мишкою
+                mode: 'xy'
+              }
+            }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'Значення' }
+            },
+            x: {
+              title: { display: true, text: 'Час' }
+            }
+          }
+        }
+      });
+
+      // Кнопка для скидання масштабу
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        chart.resetZoom();
+      });
+    }
+
+    renderChart();
+  </script>
+</body>
+</html>
