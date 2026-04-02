@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Графік даних сенсора</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Температура та Вологість</h1>
+  <canvas id="myChart" width="800" height="400"></canvas>
+
+  <script>
+    async function fetchData() {
+      const res = await fetch("/data");
+      const json = await res.json();
+      return json;
+    }
+
+    async function renderChart() {
+      const logs = await fetchData();
+
+      // сортуємо записи за ключами
+      const entries = Object.entries(logs).sort((a, b) => a[0].localeCompare(b[0]));
+
+      const labels = entries.map(e => e[0]);
+      const temps = entries.map(e => e[1].temperature);
+      const hums = entries.map(e => e[1].humidity);
+
+      const ctx = document.getElementById("myChart").getContext("2d");
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Температура (°C)', borderColor: 'red', data: temps, fill: false },
+            { label: 'Вологість (%)', borderColor: 'blue', data: hums, fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Дані сенсора' }
+          }
+        }
+      });
+    }
+
+    renderChart();
+  </script>
+</body>
+</html>
